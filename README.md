@@ -1,4 +1,4 @@
-# Plex "Now Playing" for TidByt
+# Plex "Now Playing" for Tidbyt
 A Work in Progress: This Node app aims to send Plex API data from a local media library to Tidbyt's Pixlet runtime for a nice "now playing" type display.
 
 First run `npm install`, then create an `.env` with the server address + auth token:
