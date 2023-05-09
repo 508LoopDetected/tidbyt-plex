@@ -15,6 +15,34 @@ axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-T
       console.log(artist);
       console.log(songTitle);
 
+      /*const tidbytMessage = {
+        frames: [
+          {
+            icon: albumArt,
+            text: songTitle,
+            subtext: artist
+          }
+        ]
+      };
+
+      const options = {
+        method: 'POST',
+        url: `https://api.tidbyt.com/v0/devices/${process.env.TIDBYT_DEVICE_ID}/push`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.TIDBYT_API_TOKEN}`
+        },
+        data: tidbytMessage
+      };
+
+      axios(options)
+        .then(response => {
+          console.log(`Successfully sent message to Tidbyt device: ${response.data.message_id}`);
+        })
+        .catch(error => {
+          console.log(`Error sending message to Tidbyt device: ${error}`);
+        });*/
+      
     } else {
       console.log('No sessions found');
     }
