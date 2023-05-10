@@ -38,6 +38,7 @@ axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-T
     }
     main()
 
+    // Get Plex current song + save to GIF
     const sessions = response.data.MediaContainer.Metadata;
     if (sessions && sessions.length > 0) {
       const currentSong = sessions[0];
@@ -47,6 +48,10 @@ axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-T
 
       const canvas = createCanvas(64, 32);
       const ctx = canvas.getContext('2d');
+
+      // Set background color
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Load album art
       loadImage(albumArtUrl).then(img => {
@@ -66,11 +71,25 @@ axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-T
             console.log(`Error writing file: ${err}`);
           } else {
             console.log('Image saved successfully!');
+
+            // Read the contents of the file into a buffer
+            fs.readFile('song-info.gif', (err, data) => {
+              if (err) {
+                console.log(`Error reading file: ${err}`);
+              } else {
+                // Push the buffer to Tidbyt
+                const deviceId = process.env.TIDBYT_DEVICE_ID
+                const tidbyt = new Tidbyt(process.env.TIDBYT_API_TOKEN)
+                tidbyt.devices.push(deviceId, data, { installationID: 'plextest', background: false });
+              }
+            });
           }
         });
+
       }).catch(err => {
         console.log(`Error loading image: ${err}`);
       });
+
     } else {
       console.log('No sessions found');
     }
