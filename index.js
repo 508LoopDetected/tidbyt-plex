@@ -2,9 +2,42 @@ require('dotenv').config();
 const { createCanvas, loadImage } = require('canvas');
 const axios = require('axios');
 const fs = require('fs');
+const Tidbyt = require('tidbyt')
 
 axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}`)
   .then(response => {
+
+    // testing Tidbyt API responses
+    async function main() {
+        const deviceId = process.env.TIDBYT_DEVICE_ID
+        const tidbyt = new Tidbyt(process.env.TIDBYT_API_TOKEN)
+
+        // get our requested device
+        const device = await tidbyt.devices.get(deviceId)
+        const { displayName, lastSeen } = device
+
+        console.log(displayName, `Last Seen: (${lastSeen})`)
+
+        // get a list of officially available apps
+        // return as map so we can lookup app name/descriptions by id
+        const apps = await tidbyt.apps.list({ asMap: true })
+
+        // get the list of installations for this device
+        const installations = await device.installations.list()
+
+        for (const { id, appID } of installations) {
+            const {
+                name = 'Custom',
+                description = `Unlike a regular Tidbyt app, this "installation" was pushed to ${displayName} via Tidbyt's API.`,
+            } = apps.get(appID) || {}
+
+            console.log(``)
+            console.log(`  ${name} - ${id}`)
+            console.log(`      ${description}`)
+        }
+    }
+    main()
+
     const sessions = response.data.MediaContainer.Metadata;
     if (sessions && sessions.length > 0) {
       const currentSong = sessions[0];
