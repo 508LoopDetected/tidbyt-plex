@@ -1,7 +1,9 @@
 # Plex "Now Playing" for Tidbyt
-A Work in Progress: This Node app aims to send Plex API data from a local media library to Tidbyt's Pixlet runtime for a nice "now playing" type display.
+A Work in Progress: This Node app aims to send Plex API data from a local media library to a Tidbyt device on the same network for a nice "now playing" type display. We're bypassing the Pixlet runtime in this particular instance and utilizing the unofficial [Node-based Tidbyt API client](https://github.com/drudge/node-tidbyt) instead.
 
-First run `npm install`, then create an `.env` with the server address + auth token:
+### Getting Started
+
+After running `npm install`, create a `.env` with the following credentials:
 
     PLEX_SERVER_ADDR=server_ip_here
     PLEX_AUTH_TOKEN=auth_token_here
@@ -10,7 +12,7 @@ First run `npm install`, then create an `.env` with the server address + auth to
 
 Assuming Plex or Plexamp is currently playing something, run `npm test` to see the result in your console. A 64x32 image of song info will instantly be added to the Tidbyt device app rotation.
 
-### Coming up next:
+### To-Do
 
 - Build a listener for when Plex API plays a new file
 - Add Express to keep app alive on local NAS or web hosting
