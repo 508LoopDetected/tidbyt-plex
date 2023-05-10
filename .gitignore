@@ -1,5 +1,5 @@
 # This App
-*.gif
+./*.gif
 
 # Logs
 logs
