@@ -10,4 +10,9 @@ First run `npm install`, then create an `.env` with the server address + auth to
 
 Assuming Plex or Plexamp is currently playing something, run `npm test` to see the result in your console. A 64x32 image of song info will instantly be added to the Tidbyt device app rotation.
 
-That's all I've got so far. To be continued.
+### Coming up next:
+
+- Build a listener for when Plex API plays a new file
+- Add Express to keep app alive on local NAS or web hosting
+- Import bitmap font for display text
+- Create 2-3 display themes/layouts
