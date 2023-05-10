@@ -1,48 +1,43 @@
 require('dotenv').config();
-
+const { createCanvas, loadImage } = require('canvas');
 const axios = require('axios');
+const fs = require('fs');
 
 axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}`)
   .then(response => {
     const sessions = response.data.MediaContainer.Metadata;
     if (sessions && sessions.length > 0) {
       const currentSong = sessions[0];
-      const albumArt = `http://${process.env.PLEX_SERVER_ADDR}:32400${currentSong.thumb}?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}&minSize=1`;
+      const albumArtUrl = `http://${process.env.PLEX_SERVER_ADDR}:32400${currentSong.thumb}?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}&minSize=1`;
       const songTitle = currentSong.title;
       const artist = currentSong.grandparentTitle;
 
-      console.log(albumArt);
-      console.log(artist);
-      console.log(songTitle);
+      const canvas = createCanvas(64, 32);
+      const ctx = canvas.getContext('2d');
 
-      /*const tidbytMessage = {
-        frames: [
-          {
-            icon: albumArt,
-            text: songTitle,
-            subtext: artist
+      // Load album art
+      loadImage(albumArtUrl).then(img => {
+        ctx.drawImage(img, 0, 0, 32, 32);
+        // Draw text
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 8px Arial';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(songTitle, 63, 10);
+        ctx.fillText(artist, 63, 20);
+        // Convert canvas to base64 image
+        const base64Image = canvas.toDataURL().replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(base64Image, 'base64');
+        // Write image to file
+        fs.writeFile('song-info.gif', buffer, err => {
+          if (err) {
+            console.log(`Error writing file: ${err}`);
+          } else {
+            console.log('Image saved successfully!');
           }
-        ]
-      };
-
-      const options = {
-        method: 'POST',
-        url: `https://api.tidbyt.com/v0/devices/${process.env.TIDBYT_DEVICE_ID}/push`,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.TIDBYT_API_TOKEN}`
-        },
-        data: tidbytMessage
-      };
-
-      axios(options)
-        .then(response => {
-          console.log(`Successfully sent message to Tidbyt device: ${response.data.message_id}`);
-        })
-        .catch(error => {
-          console.log(`Error sending message to Tidbyt device: ${error}`);
-        });*/
-      
+        });
+      }).catch(err => {
+        console.log(`Error loading image: ${err}`);
+      });
     } else {
       console.log('No sessions found');
     }
