@@ -1,44 +1,38 @@
 require('dotenv').config();
-const { createCanvas, loadImage } = require('canvas');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 const axios = require('axios');
 const fs = require('fs');
-const Tidbyt = require('tidbyt')
+const Tidbyt = require('tidbyt');
 
-axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}`)
-  .then(response => {
+// first let's calculate text wrap
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  var words = text.split(' ');
+  var lines = [];
+  var line = '';
+  for (var i = 0; i < words.length; i++) {
+    var testLine = line + words[i] + ' ';
+    var metrics = context.measureText(testLine);
+    var testWidth = metrics.width;
 
-    // testing Tidbyt API responses
-    async function main() {
-        const deviceId = process.env.TIDBYT_DEVICE_ID
-        const tidbyt = new Tidbyt(process.env.TIDBYT_API_TOKEN)
-
-        // get our requested device
-        const device = await tidbyt.devices.get(deviceId)
-        const { displayName, lastSeen } = device
-
-        console.log(displayName, `Last Seen: (${lastSeen})`)
-
-        // get a list of officially available apps
-        // return as map so we can lookup app name/descriptions by id
-        const apps = await tidbyt.apps.list({ asMap: true })
-
-        // get the list of installations for this device
-        const installations = await device.installations.list()
-
-        for (const { id, appID } of installations) {
-            const {
-                name = 'Custom',
-                description = `Unlike a regular Tidbyt app, this "installation" was pushed to ${displayName} via Tidbyt's API.`,
-            } = apps.get(appID) || {}
-
-            console.log(``)
-            console.log(`  ${name} - ${id}`)
-            console.log(`      ${description}`)
-        }
+    if (testWidth > maxWidth && i > 0) {
+      lines.push(line);
+      line = words[i] + ' ';
+    } else {
+      line = testLine;
     }
-    main()
+  }
+  lines.push(line);
+  for (var j = 0; j < lines.length; j++) {
+    var lineY = y - (lines.length - j - 1) * lineHeight;
+    context.fillText(lines[j], x, lineY);
+  }
+}
 
-    // Get Plex current song + save to GIF
+// main app
+const fetchCurrentSong = async () => {
+  try {
+    // get currently running Plex session
+    const response = await axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-Token=${process.env.PLEX_AUTH_TOKEN}`);
     const sessions = response.data.MediaContainer.Metadata;
     if (sessions && sessions.length > 0) {
       const currentSong = sessions[0];
@@ -48,52 +42,97 @@ axios.get(`http://${process.env.PLEX_SERVER_ADDR}:32400/status/sessions?X-Plex-T
 
       const canvas = createCanvas(64, 32);
       const ctx = canvas.getContext('2d');
+      registerFont('./res/monobit.ttf', { family: 'monobit' });
 
-      // Set background color
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Load album art
-      loadImage(albumArtUrl).then(img => {
-        ctx.drawImage(img, 0, 0, 32, 32);
-        // Draw text
-        ctx.textAlign = 'right';
-        ctx.font = 'bold 8px Arial';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(songTitle, 63, 10);
-        ctx.fillText(artist, 63, 20);
-        // Convert canvas to base64 image
-        const base64Image = canvas.toDataURL().replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(base64Image, 'base64');
-        // Write image to file
-        fs.writeFile('song-info.gif', buffer, err => {
-          if (err) {
-            console.log(`Error writing file: ${err}`);
-          } else {
-            console.log('Image saved successfully!');
+      const img = await loadImage(albumArtUrl);
+      const aspectRatio = img.width / img.height;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const canvasAspectRatio = canvasWidth / canvasHeight;
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = img.width;
+      let sourceHeight = img.height;
+      if (aspectRatio > canvasAspectRatio) {
+        sourceWidth = img.height * canvasAspectRatio;
+        sourceX = (img.width - sourceWidth) / 2;
+      } else {
+        sourceHeight = img.width / canvasAspectRatio;
+        sourceY = (img.height - sourceHeight) / 2;
+      }
+      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
 
-            // Read the contents of the file into a buffer
-            fs.readFile('song-info.gif', (err, data) => {
-              if (err) {
-                console.log(`Error reading file: ${err}`);
-              } else {
-                // Push the buffer to Tidbyt
-                const deviceId = process.env.TIDBYT_DEVICE_ID
-                const tidbyt = new Tidbyt(process.env.TIDBYT_API_TOKEN)
-                tidbyt.devices.push(deviceId, data, { installationID: 'plextest', background: false });
-              }
-            });
-          }
-        });
+      // gradient overlay
+      const gradient = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - 32);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, canvas.height - 32, canvas.width, 32);
 
-      }).catch(err => {
-        console.log(`Error loading image: ${err}`);
+      // draw text
+      ctx.textAlign = 'left';
+      ctx.font = '16px monobit';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      wrapText(ctx, songTitle.toUpperCase(), 2, canvas.height - 1, canvas.width - 0, 6);
+      ctx.fillStyle = '#ffffff';
+      wrapText(ctx, songTitle.toUpperCase(), 1, canvas.height - 1, canvas.width - 0, 6);
+
+      // write to file and deploy to Tidbyt
+      const base64Image = canvas.toDataURL().replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Image, 'base64');
+      fs.writeFile('res/songinfo.gif', buffer, err => {
+        if (err) {
+          console.log(`Error writing file: ${err}`);
+        } else {
+          fs.readFile('res/songinfo.gif', (err, data) => {
+            if (err) {
+              console.log(`Error reading file: ${err}`);
+            } else {
+              tidbytDeploy(data);
+            }
+          });
+        }
       });
-
     } else {
-      console.log('No sessions found');
+      console.log('Nothing seems to be playing...');
     }
-  })
-  .catch(error => {
+  } catch (error) {
     console.log(`Error getting current song: ${error}`);
-  });
+  }
+};
+
+// pushes to specified Tidbyt
+const tidbytDeploy = async (data) => {
+  const deviceId = process.env.TIDBYT_DEVICE_ID;
+  const tidbyt = new Tidbyt(process.env.TIDBYT_API_TOKEN);
+  const deviceObj = await tidbyt.devices.get(deviceId);
+  const { displayName, lastSeen } = deviceObj;
+  console.log(displayName, `was found! Last seen on ${lastSeen}`);
+
+  const options = {
+    installationID: 'plexmusic',
+    background: false,
+    app: {
+      name: 'Plex Now Playing',
+      description: `Hello ${displayName}! Display the currently playing song from your local Plex API.`,
+      appID: 'plexdisplay'
+    }
+  };
+  await tidbyt.devices.push(deviceId, data, options);
+
+  // list all current apps
+  /*const apps = await tidbyt.apps.list({ asMap: true });
+  const installations = await deviceObj.installations.list();
+  for (const { id, appID } of installations) {
+    const { name = 'Plex Now Playing', description = `Hello ${displayName}! Display the currently playing song from your local Plex API.` } = apps.get(appID) || {};
+
+    console.log(``);
+    console.log(`  ${name} - ${id}`);
+    console.log(`      ${description}`);
+  }*/
+};
+
+fetchCurrentSong();
