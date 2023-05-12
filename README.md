@@ -1,5 +1,5 @@
 # Plex "Now Playing" for Tidbyt
-A work in progress: This Node.js app sends Plex API data from your local music library to a registered Tidbyt device for a nice "now playing" display. We're bypassing the Pixlet runtime in this particular instance and utilizing the unofficial [Tidbyt Node client](https://github.com/drudge/node-tidbyt) instead.
+This Node.js app sends Plex API data from your local music library to a registered Tidbyt device for a nice "now playing" display. We're bypassing the Pixlet runtime in this particular instance and utilizing the unofficial [Tidbyt Node client](https://github.com/drudge/node-tidbyt) instead.
 
 ### Getting Started
 
