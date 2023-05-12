@@ -12,7 +12,7 @@ After running `npm install`, create a `.env` with the following credentials:
 
 Run `npm start` to initialize the server, and node-cron will listen for API updates every 5 seconds. Assuming Plex or Plexamp is currently playing something, you'll see the result both in your console and displayed on your Tidbyt.
 
-Turns out it's difficult to take a photo of a Tidbyt screen, but here's some examples of what to expect:
+It's difficult to take photos of the Tidbyt screen, but here are some examples:
 
 ![](res/tidbyt-screen.jpg)
 
