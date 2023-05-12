@@ -10,12 +10,13 @@ After running `npm install`, create a `.env` with the following credentials:
     TIDBYT_DEVICE_ID=device_id_here
     TIDBYT_API_TOKEN=device_token_here
 
-Assuming Plex or Plexamp is currently playing something, run `npm test` to see the result in your console. A 64x32 image of song metadata should instantaneously upload to your Tidbyt's app rotation.
+Run `npm start` to initialize the server, and node-cron will listen for API updates every 5 seconds. Assuming Plex or Plexamp is currently playing something, you'll see the result both in your console and displayed on your Tidbyt.
+
+Turns out it's difficult to take a photo of a Tidbyt screen, but here's some examples of what to expect:
+
+![](res/tidbyt-screen.jpg)
 
 ### To-Do
 
-- Delete image after push
 - Fix font dependency
-- Build a listener for when Plex API plays a new file
-- Add Express to keep app alive on local NAS or web hosting
 - Setup a default "no artwork found" image

@@ -4,15 +4,15 @@
   "description": "Plex integration for Tidbyt to show currently playing media",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "start": "node index.js"
   },
   "author": "Michael Milstead",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.4.0",
     "canvas": "^2.11.2",
-    "canvas-constructor": "^7.0.0",
     "dotenv": "^16.0.3",
+    "node-cron": "^3.0.2",
     "tidbyt": "^1.1.3"
   }
 }
