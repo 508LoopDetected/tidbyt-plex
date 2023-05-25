@@ -16,5 +16,6 @@ Run `npm start` to initialize the server. Assuming Plex or Plexamp is currently 
 
 ### To-Do
 
-- Fix font dependency
-- Setup a default "no artwork found" image
+- Fix font dependency (currently requires font to be installed on your system)
+- Setup a default "no artwork found" image (currently sends error if nothing is found)
+- Handle special characters (current font kinda hates them)
